@@ -5,14 +5,18 @@ import re
 import time
 from bs4 import BeautifulSoup
 from pymongo import MongoClient
-
+from dotenv import load_dotenv
 # ========== CONFIG ==========
-SCRAPER_API_KEY = "27d002c4515dd96cbdc9ba21c75c952f"  # Replace with your key
+load_dotenv()
+
+SCRAPER_API_KEY = os.getenv("SCRAPER_API_KEY")
 SCRAPER_BASE = "https://api.scraperapi.com"
 SAVE_DIR = "data"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
-MONGO_URI = "mongodb+srv://boddusuhas9:suhas@cluster0.3q9awms.mongodb.net/todoDB?retryWrites=true&w=majority&appName=Cluster0"
+
+MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+
 client = MongoClient(MONGO_URI)
 # try:
 #     client.admin.command("ping")
