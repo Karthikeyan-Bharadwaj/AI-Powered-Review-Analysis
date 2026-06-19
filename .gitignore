@@ -2,13 +2,28 @@
 __pycache__/
 *.pyc
 .venv/
+backend/.venv/
 .env
 *.env
+backend/.env
+.env.local
 
 # Node
 node_modules/
+frontend/node_modules/
 dist/
 build/
+frontend/.vite/
+
+# Logs, caches, and credential files
+*.log
+*.cache
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
+*.cer
 
 # Environment / OS files
 .DS_Store
