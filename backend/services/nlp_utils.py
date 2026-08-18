@@ -7,7 +7,6 @@ import nltk
 import os
 from datetime import datetime, timezone
 from dotenv import load_dotenv
-from transformers import pipeline
 
 # =====================================================
 # 🔧 Setup
@@ -52,6 +51,11 @@ def get_summarizer():
         if os.getenv("NLP_DISABLE_SUMMARIZER", "").lower() in ("1", "true", "yes"):
             return None
         if summarizer is None:
+            # Import here, not at module load time: this pulls in torch and
+            # is a large chunk of memory we don't want to pay for on every
+            # boot when the summarizer is disabled (the common case on
+            # memory-constrained hosts).
+            from transformers import pipeline
             print("⚙️ Loading local summarization model (DistilBART)...")
             tmp = pipeline(
                 "summarization",
