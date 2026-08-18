@@ -109,7 +109,11 @@ useEffect(() => {
 
   if (!show) return null;
 
-  const COLORS = ["#16a34a", "#ca8a04", "#dc2626"];
+  const SENTIMENT_COLORS: Record<string, string> = {
+    Positive: "#16a34a",
+    Neutral: "#ca8a04",
+    Negative: "#dc2626",
+  };
 
   const dominantSentiment = sentimentData.length
     ? sentimentData.reduce((max, cur) => (cur.value > max.value ? cur : max), sentimentData[0]).name
@@ -166,8 +170,8 @@ useEffect(() => {
                 outerRadius={110}
                 dataKey="value"
               >
-                {sentimentData.map((_, index) => (
-                  <Cell key={index} fill={COLORS[index % COLORS.length]} />
+                {sentimentData.map((entry, index) => (
+                  <Cell key={index} fill={SENTIMENT_COLORS[entry.name] || "#94a3b8"} />
                 ))}
               </Pie>
               <Tooltip />
