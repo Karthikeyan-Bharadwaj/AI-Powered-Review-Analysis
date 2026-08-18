@@ -2,14 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
+/* Flat, single-accent light theme. All colors MUST be HSL. No gradients. */
 
 @layer base {
   :root {
-    /* Clean Light Theme */
-    --background: 220 30% 98%;
+    --background: 220 20% 99%;
     --foreground: 222 47% 11%;
 
     --card: 0 0% 100%;
@@ -18,40 +15,30 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    --primary: 217 91% 50%;
+    /* Single accent color, used everywhere (eBay, BestBuy, links, buttons) */
+    --primary: 217 91% 45%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 217 91% 60%;
 
-    --secondary: 25 95% 47%;
-    --secondary-foreground: 0 0% 100%;
-    --secondary-glow: 25 95% 57%;
+    /* Neutral gray, for the generic (non-brand) secondary button style */
+    --secondary: 220 14% 93%;
+    --secondary-foreground: 222 47% 11%;
 
-    --muted: 220 20% 94%;
-    --muted-foreground: 220 10% 40%;
+    --muted: 220 14% 95%;
+    --muted-foreground: 220 9% 40%;
 
-    --accent: 217 91% 50%;
+    --accent: 217 91% 45%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 74% 50%;
+    --destructive: 0 72% 46%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 20% 88%;
-    --input: 220 20% 92%;
-    --ring: 217 91% 50%;
+    --border: 220 14% 88%;
+    --input: 220 14% 91%;
+    --ring: 217 91% 45%;
 
-    --radius: 0.75rem;
+    --radius: 0.5rem;
 
-    /* Custom design tokens */
-    --gradient-dark: linear-gradient(135deg, hsl(220 30% 98%) 0%, hsl(220 30% 95%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(220 20% 98%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 55%) 0%, hsl(217 91% 45%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(25 95% 50%) 0%, hsl(25 95% 40%) 100%);
-
-    --shadow-neon-blue: 0 0 0 1px hsl(217 91% 50% / 0.15), 0 8px 24px -8px hsl(217 91% 50% / 0.35);
-    --shadow-neon-orange: 0 0 0 1px hsl(25 95% 47% / 0.15), 0 8px 24px -8px hsl(25 95% 47% / 0.35);
     --shadow-card: 0 1px 3px hsl(220 20% 30% / 0.08), 0 1px 2px hsl(220 20% 30% / 0.06);
-
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
@@ -60,33 +47,17 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(180deg, hsl(217 60% 97%) 0%, hsl(220 30% 98%) 40%);
     min-height: 100vh;
-  }
-}
-
-@layer utilities {
-  .glow-blue {
-    box-shadow: var(--shadow-neon-blue);
+    line-height: 1.6;
   }
 
-  .glow-orange {
-    box-shadow: var(--shadow-neon-orange);
-  }
-
-  .gradient-text-blue {
-    background: linear-gradient(135deg, hsl(217 91% 45%) 0%, hsl(217 91% 30%) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  .gradient-text-orange {
-    background: linear-gradient(135deg, hsl(25 95% 45%) 0%, hsl(25 95% 30%) 100%);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
+  h1, h2, h3, h4, h5, h6 {
+    line-height: 1.25;
   }
 }

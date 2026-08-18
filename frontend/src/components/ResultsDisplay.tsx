@@ -126,7 +126,7 @@ useEffect(() => {
   };
 
   return (
-    <div className="space-y-10 bg-card p-8 rounded-xl border border-border shadow-[var(--shadow-card)] animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-8 bg-card p-4 sm:p-8 rounded-xl border border-border shadow-[var(--shadow-card)]">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <h2 className="text-3xl font-bold text-foreground">AI Insights</h2>
         {dominantSentiment && (
@@ -156,7 +156,7 @@ useEffect(() => {
 
       {/* Sentiment Chart */}
       {sentimentData.length > 0 && (
-        <Card className="p-6 bg-muted/40 border border-border">
+        <Card className="p-4 sm:p-6 bg-muted border border-border">
           <h3 className="text-xl font-semibold mb-4 text-foreground">
             Sentiment Distribution
           </h3>
@@ -183,14 +183,22 @@ useEffect(() => {
 
       {/* Aspect Chart */}
       {aspectChartData.length > 0 && (
-        <Card className="p-6 bg-muted/40 border border-border">
+        <Card className="p-4 sm:p-6 bg-muted border border-border">
           <h3 className="text-xl font-semibold mb-4 text-foreground">
             Aspect Breakdown
           </h3>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={aspectChartData}>
-              <XAxis dataKey="aspect" stroke="#64748b" />
-              <YAxis stroke="#64748b" />
+          <ResponsiveContainer width="100%" height={320}>
+            <BarChart data={aspectChartData} margin={{ bottom: 40 }}>
+              <XAxis
+                dataKey="aspect"
+                stroke="#64748b"
+                tick={{ fontSize: 11 }}
+                interval={0}
+                angle={-35}
+                textAnchor="end"
+                height={60}
+              />
+              <YAxis stroke="#64748b" tick={{ fontSize: 11 }} allowDecimals={false} />
               <Tooltip />
               <Legend />
               <Bar dataKey="Positive" fill="#16a34a" />
@@ -203,7 +211,7 @@ useEffect(() => {
 
       {/* Top Reviews Section (expandable cards) */}
       {(topPositive.length > 0 || topNegative.length > 0) && (
-        <Card className="p-6 bg-muted/40 border border-border">
+        <Card className="p-4 sm:p-6 bg-muted border border-border">
           <h3 className="text-xl font-semibold mb-6 text-foreground">
             Top Reviews
           </h3>
@@ -302,7 +310,7 @@ useEffect(() => {
       )}
 
       {/* Summary */}
-      <Card className="p-6 bg-muted/40 border border-border">
+      <Card className="p-4 sm:p-6 bg-muted border border-border">
         <h3 className="text-xl font-semibold mb-4 text-foreground">
           AI Summary
         </h3>
@@ -313,10 +321,10 @@ useEffect(() => {
 
       {/* Aspect-based highlights with dropdown filter */}
       {Object.keys(aspectExamples || {}).length > 0 && (
-        <Card className="p-6 bg-muted/40 border border-border">
-          <div className="flex items-center justify-between mb-4 gap-4">
+        <Card className="p-4 sm:p-6 bg-muted border border-border">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4 gap-3">
             <h3 className="text-xl font-semibold text-foreground">Aspect-based highlights</h3>
-            <div className="w-56">
+            <div className="w-full sm:w-56">
               <Select value={selectedAspect} onValueChange={(v) => setSelectedAspect(v)}>
                 <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Select aspect" />

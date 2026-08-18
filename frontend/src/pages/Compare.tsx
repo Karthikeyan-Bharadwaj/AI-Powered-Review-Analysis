@@ -100,17 +100,17 @@ const Compare = () => {
 
       <main className="container mx-auto px-4 py-12 max-w-[1500px]">
         <div className="space-y-12">
-          <div className="text-center space-y-4">
-            <h1 className="text-4xl md:text-5xl font-bold gradient-text-blue">
-              Compare Products
+          <div className="text-center space-y-2">
+            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+              Compare products
             </h1>
-            <p className="text-muted-foreground text-lg">
-              Compare two products side by side with AI-powered analysis
+            <p className="text-muted-foreground">
+              Paste two product links and see their review breakdowns side by side
             </p>
           </div>
 
           {/* Form */}
-          <Card className="p-8 bg-card/50 backdrop-blur-sm border-border">
+          <Card className="p-4 sm:p-8 bg-card border-border">
             <form onSubmit={handleCompare} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
@@ -146,15 +146,15 @@ const Compare = () => {
 
               <Button
                 type="submit"
-                variant="neon"
+                variant="solid"
                 size="xl"
-                className="w-full"
+                className="w-full px-6 sm:px-12"
                 disabled={isComparing}
               >
                 {isComparing ? (
                   <>
                     <Loader2 className="animate-spin mr-2" />
-                    {comparingStep || "Comparing Products..."}
+                    {comparingStep || "Comparing..."}
                   </>
                 ) : (
                   <>
@@ -172,8 +172,8 @@ const Compare = () => {
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
                 {/* Product 1 Panel */}
                 <div className="space-y-4">
-                  <Card className="p-4 bg-card/50 border border-border">
-                    <h3 className="text-xl font-semibold mb-2 gradient-text-blue">Product 1</h3>
+                  <Card className="p-4 bg-card border border-border">
+                    <h3 className="text-xl font-semibold mb-2 text-foreground">Product 1</h3>
                     <p className="text-xs text-muted-foreground">ID: {product1.id || '—'}</p>
                   </Card>
                   <ResultsDisplay
@@ -185,8 +185,8 @@ const Compare = () => {
 
                 {/* Product 2 Panel */}
                 <div className="space-y-4">
-                  <Card className="p-4 bg-card/50 border border-border">
-                    <h3 className="text-xl font-semibold mb-2 gradient-text-orange">Product 2</h3>
+                  <Card className="p-4 bg-card border border-border">
+                    <h3 className="text-xl font-semibold mb-2 text-foreground">Product 2</h3>
                     <p className="text-xs text-muted-foreground">ID: {product2.id || '—'}</p>
                   </Card>
                   <ResultsDisplay
@@ -198,11 +198,11 @@ const Compare = () => {
               </div>
 
               {/* AI Comparison Summary (stretches full width) */}
-              <Card className="p-6 bg-card/50 backdrop-blur-sm border border-border">
+              <Card className="p-4 sm:p-6 bg-card border border-border">
                 <div className="space-y-4">
-                  <h3 className="text-2xl font-semibold flex items-center gap-2">
-                    <ArrowLeftRight className="w-6 h-6 text-primary" />
-                    AI Comparison Summary
+                  <h3 className="text-xl font-semibold flex items-center gap-2 text-foreground">
+                    <ArrowLeftRight className="w-5 h-5 text-primary" />
+                    Comparison summary
                   </h3>
                   <p className="text-foreground/80 leading-relaxed text-sm md:text-base">
                     {comparisonSummary || "No comparison available. Please check if products have reviews."}
