@@ -1,3 +1,4 @@
+import os
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from services.ebay_scraper import fetch_and_save_reviews
@@ -12,7 +13,8 @@ from bson import ObjectId
 from services import nlp_utils as nlp
 
 app = Flask(__name__)
-CORS(app)
+FRONTEND_ORIGIN = os.getenv("FRONTEND_ORIGIN", "http://localhost:8080")
+CORS(app, origins=[FRONTEND_ORIGIN])
 
 # ✅ Helper — clean MongoDB documents for JSON output
 def clean_mongo_docs(docs):
