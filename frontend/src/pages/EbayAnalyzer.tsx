@@ -51,13 +51,12 @@ const EbayAnalyzer = () => {
   };
 
   return (
-    <div className="min-h-screen text-white bg-gradient-to-b from-[#020617] to-[#0f172a]">
+    <div className="min-h-screen">
       <Navigation />
 
       <main className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="space-y-12">
           <AnalyzerForm
-            platform="ebay"
             onAnalyze={handleAnalyze}
             isLoading={loading}
             loadingStep={loadingStep}

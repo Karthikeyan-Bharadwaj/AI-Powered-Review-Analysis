@@ -14,6 +14,14 @@ SCRAPER_BASE = "https://api.scraperapi.com"
 SAVE_DIR = "data"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
+DIRECT_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "en-US,en;q=0.9",
+}
+
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 
@@ -34,7 +42,20 @@ def extract_product_id(url: str):
     return match.group(1) if match else "unknown"
 
 def safe_get(url, render=False, retries=3):
-    """Uses ScraperAPI with retries and optional JS rendering"""
+    """Scrape eBay directly first (no third-party API or credits used);
+    fall back to ScraperAPI only if eBay blocks/rejects the direct request."""
+    if not render:
+        try:
+            resp = requests.get(url, headers=DIRECT_HEADERS, timeout=20)
+            if resp.status_code == 200 and len(resp.text) > 500:
+                return resp
+            print(f"⚠️ Direct request got HTTP {resp.status_code}, falling back to ScraperAPI")
+        except requests.RequestException as e:
+            print(f"⚠️ Direct request failed ({e}), falling back to ScraperAPI")
+
+    if not SCRAPER_API_KEY:
+        return None
+
     params = {
         "api_key": SCRAPER_API_KEY,
         "url": url

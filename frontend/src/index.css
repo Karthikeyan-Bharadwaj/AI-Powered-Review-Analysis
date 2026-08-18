@@ -8,49 +8,49 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Futuristic Dark Theme */
-    --background: 222 47% 4%;
-    --foreground: 0 0% 100%;
+    /* Clean Light Theme */
+    --background: 220 30% 98%;
+    --foreground: 222 47% 11%;
 
-    --card: 222 47% 8%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
 
-    --popover: 222 47% 8%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
 
-    --primary: 217 91% 60%;
+    --primary: 217 91% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-glow: 217 91% 70%;
+    --primary-glow: 217 91% 60%;
 
-    --secondary: 25 95% 53%;
+    --secondary: 25 95% 47%;
     --secondary-foreground: 0 0% 100%;
-    --secondary-glow: 25 95% 63%;
+    --secondary-glow: 25 95% 57%;
 
-    --muted: 215 20% 65%;
-    --muted-foreground: 215 20% 45%;
+    --muted: 220 20% 94%;
+    --muted-foreground: 220 10% 40%;
 
-    --accent: 217 91% 60%;
+    --accent: 217 91% 50%;
     --accent-foreground: 0 0% 100%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 74% 50%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 217 50% 20%;
-    --input: 217 50% 15%;
-    --ring: 217 91% 60%;
+    --border: 220 20% 88%;
+    --input: 220 20% 92%;
+    --ring: 217 91% 50%;
 
     --radius: 0.75rem;
 
     /* Custom design tokens */
-    --gradient-dark: linear-gradient(135deg, hsl(222 47% 4%) 0%, hsl(222 47% 2%) 100%);
-    --gradient-card: linear-gradient(135deg, hsl(222 47% 8%) 0%, hsl(222 47% 6%) 100%);
-    --gradient-primary: linear-gradient(135deg, hsl(217 91% 60%) 0%, hsl(217 91% 50%) 100%);
-    --gradient-secondary: linear-gradient(135deg, hsl(25 95% 53%) 0%, hsl(25 95% 43%) 100%);
-    
-    --shadow-neon-blue: 0 0 20px hsl(217 91% 60% / 0.3), 0 0 40px hsl(217 91% 60% / 0.1);
-    --shadow-neon-orange: 0 0 20px hsl(25 95% 53% / 0.3), 0 0 40px hsl(25 95% 53% / 0.1);
-    --shadow-card: 0 4px 6px -1px hsl(0 0% 0% / 0.3), 0 2px 4px -1px hsl(0 0% 0% / 0.2);
-    
+    --gradient-dark: linear-gradient(135deg, hsl(220 30% 98%) 0%, hsl(220 30% 95%) 100%);
+    --gradient-card: linear-gradient(135deg, hsl(0 0% 100%) 0%, hsl(220 20% 98%) 100%);
+    --gradient-primary: linear-gradient(135deg, hsl(217 91% 55%) 0%, hsl(217 91% 45%) 100%);
+    --gradient-secondary: linear-gradient(135deg, hsl(25 95% 50%) 0%, hsl(25 95% 40%) 100%);
+
+    --shadow-neon-blue: 0 0 0 1px hsl(217 91% 50% / 0.15), 0 8px 24px -8px hsl(217 91% 50% / 0.35);
+    --shadow-neon-orange: 0 0 0 1px hsl(25 95% 47% / 0.15), 0 8px 24px -8px hsl(25 95% 47% / 0.35);
+    --shadow-card: 0 1px 3px hsl(220 20% 30% / 0.08), 0 1px 2px hsl(220 20% 30% / 0.06);
+
     --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
@@ -62,7 +62,7 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    background: linear-gradient(135deg, hsl(222 47% 4%) 0%, hsl(222 47% 2%) 100%);
+    background: linear-gradient(180deg, hsl(217 60% 97%) 0%, hsl(220 30% 98%) 40%);
     min-height: 100vh;
   }
 }
@@ -71,20 +71,20 @@ All colors MUST be HSL.
   .glow-blue {
     box-shadow: var(--shadow-neon-blue);
   }
-  
+
   .glow-orange {
     box-shadow: var(--shadow-neon-orange);
   }
-  
+
   .gradient-text-blue {
-    background: linear-gradient(135deg, hsl(217 91% 70%) 0%, hsl(217 91% 50%) 100%);
+    background: linear-gradient(135deg, hsl(217 91% 45%) 0%, hsl(217 91% 30%) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
   }
-  
+
   .gradient-text-orange {
-    background: linear-gradient(135deg, hsl(25 95% 63%) 0%, hsl(25 95% 43%) 100%);
+    background: linear-gradient(135deg, hsl(25 95% 45%) 0%, hsl(25 95% 30%) 100%);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;

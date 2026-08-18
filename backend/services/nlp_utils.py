@@ -29,7 +29,16 @@ processed_collection = processed_db["reviews"]
 # 🧠 Load Sentiment Model (VADER)
 # =====================================================
 nltk.download("vader_lexicon", quiet=True)
+nltk.download("punkt", quiet=True)
+nltk.download("punkt_tab", quiet=True)
+nltk.download("stopwords", quiet=True)
 sia = SentimentIntensityAnalyzer()
+
+try:
+    from nltk.corpus import stopwords as _stopwords
+    STOPWORDS = set(_stopwords.words("english"))
+except Exception:
+    STOPWORDS = set()
 
 # =====================================================
 # 🧩 Local Summarization Model (DistilBART) — Lazy Load
@@ -58,14 +67,66 @@ def get_summarizer():
         return None
 
 # =====================================================
+# ✂️ Lightweight extractive summary (no heavy model, no OOM risk)
+# =====================================================
+def extractive_summary(text: str, max_sentences: int = 5, min_words: int = 5) -> str:
+    """Pick the most representative sentences by word-frequency scoring
+    (classic Luhn-style extractive summarization). Cheap, fast, and stable
+    on low-memory hosts — used whenever the heavy AI summarizer is disabled."""
+    if not text.strip():
+        return "No reviews available to summarize."
+
+    try:
+        sentences = nltk.sent_tokenize(text)
+    except Exception:
+        sentences = re.split(r"(?<=[.!?])\s+", text)
+
+    sentences = [s.strip() for s in sentences if len(s.split()) >= min_words]
+    if not sentences:
+        return text[:500].strip()
+
+    word_freq: dict = {}
+    for sentence in sentences:
+        for word in re.findall(r"[a-zA-Z']+", sentence.lower()):
+            if word in STOPWORDS:
+                continue
+            word_freq[word] = word_freq.get(word, 0) + 1
+
+    if not word_freq:
+        return " ".join(sentences[:max_sentences])
+
+    max_freq = max(word_freq.values())
+    for word in word_freq:
+        word_freq[word] /= max_freq
+
+    seen = set()
+    scored = []
+    for idx, sentence in enumerate(sentences):
+        normalized = sentence.lower().strip()
+        if normalized in seen:
+            continue
+        seen.add(normalized)
+        words = re.findall(r"[a-zA-Z']+", sentence.lower())
+        score = sum(word_freq.get(w, 0) for w in words) / (len(words) or 1)
+        scored.append((idx, score, sentence))
+
+    top = sorted(scored, key=lambda x: x[1], reverse=True)[:max_sentences]
+    # Restore original review order so the summary reads naturally
+    top_in_order = [s for _, _, s in sorted(top, key=lambda x: x[0])]
+    return " ".join(top_in_order)
+
+
+# =====================================================
 # 🔍 Aspect Keywords
 # =====================================================
 ASPECT_KEYWORDS = {
-    "Price": ["price", "cost", "expensive", "cheap", "value"],
-    "Quality": ["quality", "durable", "broken", "excellent", "bad"],
-    "Delivery": ["delivery", "shipping", "late", "fast", "slow"],
-    "Packaging": ["packaging", "box", "seal", "damaged"],
-    "Usability": ["use", "performance", "speed", "battery"],
+    "Price": ["price", "cost", "expensive", "cheap", "value", "worth", "money", "deal", "overpriced"],
+    "Quality": ["quality", "durable", "broken", "excellent", "bad", "defective", "sturdy", "cheaply", "well made", "poorly made"],
+    "Delivery": ["delivery", "shipping", "shipped", "late", "fast", "slow", "arrived", "shipment", "tracking"],
+    "Packaging": ["packaging", "box", "seal", "damaged", "package", "wrapped", "boxed"],
+    "Usability": ["use", "performance", "speed", "battery", "easy to use", "difficult", "setup", "instructions", "comfortable"],
+    "Customer Service": ["refund", "return", "replace", "replacement", "customer service", "support", "seller", "vendor", "response", "communication", "complaint"],
+    "Authenticity": ["authentic", "fake", "counterfeit", "genuine", "as described", "not as described", "advertised", "wrong item", "misleading"],
 }
 
 # =====================================================
@@ -86,8 +147,14 @@ def analyze_aspects(text):
     text = text.lower()
     found_aspects = []
     for aspect, keywords in ASPECT_KEYWORDS.items():
-        if any(re.search(rf"\b{k}\b", text) for k in keywords):
+        if any(re.search(rf"\b{re.escape(k)}\b", text) for k in keywords):
             found_aspects.append(aspect)
+    # Every review should count toward at least one bucket, otherwise reviews
+    # that don't hit a specific keyword (but still carry real sentiment) silently
+    # vanish from the aspect breakdown and skew it toward whichever aspects
+    # happen to be keyword-matched.
+    if not found_aspects:
+        found_aspects.append("General")
     return found_aspects
 
 
@@ -220,9 +287,7 @@ def generate_ai_summary_api(product_id: str, max_reviews: int = 150):
         print(f"🧾 Total text length used: {len(all_text)} characters")
 
         if sum_model is None:
-            # Fallback: simple extractive text
-            fallback = " ".join((r.get("text", "").strip() for r in reviews[:5]))
-            final_summary = (fallback[:1500] + ("…" if len(fallback) > 1500 else "")).strip()
+            final_summary = extractive_summary(all_text, max_sentences=6)
         else:
             # Split text into chunks
             chunk_size = int(os.getenv("SUMMARY_CHUNK_SIZE", "2500"))
@@ -272,8 +337,8 @@ def generate_competitor_summary_api(pid1: str, pid2: str, title1: str, title2: s
         print(f"🧠 Generating competitor summaries for {title1} vs {title2}")
         sum_model = get_summarizer()
         if sum_model is None:
-            summary1 = (text1[:1200] + ("…" if len(text1) > 1200 else "")) or "No summary available."
-            summary2 = (text2[:1200] + ("…" if len(text2) > 1200 else "")) or "No summary available."
+            summary1 = extractive_summary(text1, max_sentences=4) or "No summary available."
+            summary2 = extractive_summary(text2, max_sentences=4) or "No summary available."
         else:
             summary1 = sum_model(text1[:2500], max_length=130, min_length=60, do_sample=False)[0]["summary_text"]
             summary2 = sum_model(text2[:2500], max_length=130, min_length=60, do_sample=False)[0]["summary_text"]

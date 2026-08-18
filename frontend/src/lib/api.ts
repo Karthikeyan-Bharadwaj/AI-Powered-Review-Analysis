@@ -34,14 +34,6 @@ export async function scrapeEbay(url: string): Promise<ScrapeResponse> {
 }
 
 /* -----------------------------
-   🛒 BestBuy Scraper
------------------------------ */
-export async function scrapeBestBuy(url: string): Promise<ScrapeResponse> {
-  const res = await axios.post(`${API_BASE}/scrape_bestbuy`, { url });
-  return res.data as ScrapeResponse;
-}
-
-/* -----------------------------
    🧠 NLP Processor
 ----------------------------- */
 export async function processProduct(product_id: string): Promise<{ processed: number }> {

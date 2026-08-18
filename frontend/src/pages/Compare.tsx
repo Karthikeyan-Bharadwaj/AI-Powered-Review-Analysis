@@ -6,7 +6,7 @@ import { Loader2, ArrowLeftRight } from "lucide-react";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import ResultsDisplay from "@/components/ResultsDisplay";
-import { scrapeEbay, scrapeBestBuy, processProduct, getSummary, compareProducts } from "@/lib/api";
+import { scrapeEbay, processProduct, getSummary, compareProducts } from "@/lib/api";
 
 const Compare = () => {
   const [url1, setUrl1] = useState("");
@@ -26,14 +26,8 @@ const Compare = () => {
       return;
     }
 
-    const detectPlatform = (url: string) =>
-      url.includes("ebay") ? "ebay" : url.includes("bestbuy") ? "bestbuy" : null;
-
-    const platform1 = detectPlatform(url1);
-    const platform2 = detectPlatform(url2);
-
-    if (!platform1 || !platform2) {
-      toast.error("Both URLs must be from eBay or BestBuy!");
+    if (!url1.includes("ebay") || !url2.includes("ebay")) {
+      toast.error("Both URLs must be eBay product links");
       return;
     }
 
@@ -46,10 +40,8 @@ const Compare = () => {
     try {
       // Step 1 — Scrape both products
       setComparingStep("Fetching reviews for both products...");
-      const data1 =
-        platform1 === "ebay" ? await scrapeEbay(url1) : await scrapeBestBuy(url1);
-      const data2 =
-        platform2 === "ebay" ? await scrapeEbay(url2) : await scrapeBestBuy(url2);
+      const data1 = await scrapeEbay(url1);
+      const data2 = await scrapeEbay(url2);
 
       if (!data1?.reviews?.length || !data2?.reviews?.length) {
         toast.error("No reviews found for one or both products!");
@@ -95,21 +87,21 @@ const Compare = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#020617] to-[#0f172a] text-white">
+    <div className="min-h-screen">
       <Navigation />
 
-  <main className="container mx-auto px-4 py-12 max-w-[1500px]">
+      <main className="container mx-auto px-4 py-12 max-w-[1500px]">
         <div className="space-y-12">
           <div className="text-center space-y-4">
             <h1 className="text-4xl md:text-5xl font-bold gradient-text-blue">
               Compare Products
             </h1>
             <p className="text-muted-foreground text-lg">
-              Compare two products side by side with AI-powered analysis
+              Compare two eBay products side by side with AI-powered analysis
             </p>
           </div>
 
-          {/* 🧩 Form */}
+          {/* Form */}
           <Card className="p-8 bg-card/50 backdrop-blur-sm border-border">
             <form onSubmit={handleCompare} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -135,7 +127,7 @@ const Compare = () => {
                   <Input
                     id="url2"
                     type="url"
-                    placeholder="https://www.bestbuy.com/site/..."
+                    placeholder="https://www.ebay.com/itm/..."
                     value={url2}
                     onChange={(e) => setUrl2(e.target.value)}
                     className="bg-input border-border focus:border-primary transition-colors"
@@ -166,15 +158,15 @@ const Compare = () => {
             </form>
           </Card>
 
-          {/* 🧠 Results */}
+          {/* Results */}
           {showResults && (
             <div className="space-y-10">
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 items-start">
                 {/* Product 1 Panel */}
                 <div className="space-y-4">
-                  <Card className="p-4 bg-white/5 border border-white/10">
+                  <Card className="p-4 bg-card/50 border border-border">
                     <h3 className="text-xl font-semibold mb-2 gradient-text-blue">Product 1</h3>
-                    <p className="text-xs text-white/60">ID: {product1.id || '—'}</p>
+                    <p className="text-xs text-muted-foreground">ID: {product1.id || '—'}</p>
                   </Card>
                   <ResultsDisplay
                     show={true}
@@ -185,9 +177,9 @@ const Compare = () => {
 
                 {/* Product 2 Panel */}
                 <div className="space-y-4">
-                  <Card className="p-4 bg-white/5 border border-white/10">
+                  <Card className="p-4 bg-card/50 border border-border">
                     <h3 className="text-xl font-semibold mb-2 gradient-text-orange">Product 2</h3>
-                    <p className="text-xs text-white/60">ID: {product2.id || '—'}</p>
+                    <p className="text-xs text-muted-foreground">ID: {product2.id || '—'}</p>
                   </Card>
                   <ResultsDisplay
                     show={true}
@@ -198,13 +190,13 @@ const Compare = () => {
               </div>
 
               {/* AI Comparison Summary (stretches full width) */}
-              <Card className="p-6 bg-card/50 backdrop-blur-sm border border-white/10">
+              <Card className="p-6 bg-card/50 backdrop-blur-sm border border-border">
                 <div className="space-y-4">
                   <h3 className="text-2xl font-semibold flex items-center gap-2">
                     <ArrowLeftRight className="w-6 h-6 text-primary" />
                     AI Comparison Summary
                   </h3>
-                  <p className="text-white/80 leading-relaxed text-sm md:text-base">
+                  <p className="text-foreground/80 leading-relaxed text-sm md:text-base">
                     {comparisonSummary || "No comparison available. Please check if products have reviews."}
                   </p>
                 </div>

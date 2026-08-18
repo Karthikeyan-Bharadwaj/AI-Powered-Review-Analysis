@@ -5,7 +5,6 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
 import EbayAnalyzer from "./pages/EbayAnalyzer";
-import BestBuyAnalyzer from "./pages/BestBuyAnalyzer";
 import Compare from "./pages/Compare";
 import NotFound from "./pages/NotFound";
 
@@ -20,7 +19,6 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/ebay" element={<EbayAnalyzer />} />
-          <Route path="/bestbuy" element={<BestBuyAnalyzer />} />
           <Route path="/compare" element={<Compare />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

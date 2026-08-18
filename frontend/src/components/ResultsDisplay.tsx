@@ -89,11 +89,11 @@ useEffect(() => {
       const aspectKeys = Object.keys(aspects || {});
       setSelectedAspect((prev) => prev || (aspectKeys.sort()[0] || ""));
 
-      // ✅ Top positive & negative
+      // Top positive & negative
       setTopPositive(data.top_positive || []);
       setTopNegative(data.top_negative || []);
 
-      // ✅ Aspect-based examples
+      // Aspect-based examples
       setAspectExamples(data.aspect_examples || {});
     } catch (error) {
       console.error("Error fetching NLP data:", error);
@@ -104,32 +104,32 @@ useEffect(() => {
   };
 
   fetchNLPData();
-}, [productId]); // ❗ remove 'show'
+}, [productId]);
 
 
   if (!show) return null;
 
-  const COLORS = ["#22c55e", "#facc15", "#ef4444"];
+  const COLORS = ["#16a34a", "#ca8a04", "#dc2626"];
 
   const dominantSentiment = sentimentData.length
     ? sentimentData.reduce((max, cur) => (cur.value > max.value ? cur : max), sentimentData[0]).name
     : sentiment;
 
   const sentimentStyles: Record<string, string> = {
-    Positive: "bg-green-500/15 text-green-300 border-green-400/30",
-    Neutral: "bg-yellow-500/15 text-yellow-300 border-yellow-400/30",
-    Negative: "bg-red-500/15 text-red-300 border-red-400/30",
+    Positive: "bg-green-50 text-green-700 border-green-300",
+    Neutral: "bg-yellow-50 text-yellow-700 border-yellow-300",
+    Negative: "bg-red-50 text-red-700 border-red-300",
   };
 
   return (
-    <div className="space-y-10 bg-white/10 p-8 rounded-xl backdrop-blur-lg shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
+    <div className="space-y-10 bg-card p-8 rounded-xl border border-border shadow-[var(--shadow-card)] animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <h2 className="text-3xl font-bold text-white">AI Insights</h2>
+        <h2 className="text-3xl font-bold text-foreground">AI Insights</h2>
         {dominantSentiment && (
           <span
             className={cn(
               "text-sm font-semibold px-4 py-1.5 rounded-full border",
-              sentimentStyles[dominantSentiment] || "bg-white/10 text-white border-white/20"
+              sentimentStyles[dominantSentiment] || "bg-muted text-foreground border-border"
             )}
           >
             Overall: {dominantSentiment}
@@ -138,22 +138,22 @@ useEffect(() => {
       </div>
 
       {isLoadingInsights && sentimentData.length === 0 && (
-        <div className="flex items-center gap-3 text-white/70 text-sm">
-          <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+        <div className="flex items-center gap-3 text-muted-foreground text-sm">
+          <div className="w-4 h-4 rounded-full border-2 border-muted-foreground/30 border-t-primary animate-spin" />
           Crunching the sentiment and aspect breakdown…
         </div>
       )}
 
       {insightsError && (
-        <div className="rounded-lg border border-yellow-400/30 bg-yellow-400/10 px-4 py-3 text-sm text-yellow-200">
+        <div className="rounded-lg border border-yellow-300 bg-yellow-50 px-4 py-3 text-sm text-yellow-800">
           {insightsError}
         </div>
       )}
 
       {/* Sentiment Chart */}
       {sentimentData.length > 0 && (
-        <Card className="p-6 bg-white/5 border border-white/10">
-          <h3 className="text-xl font-semibold mb-4 text-white/90">
+        <Card className="p-6 bg-muted/40 border border-border">
+          <h3 className="text-xl font-semibold mb-4 text-foreground">
             Sentiment Distribution
           </h3>
           <ResponsiveContainer width="100%" height={300}>
@@ -179,34 +179,34 @@ useEffect(() => {
 
       {/* Aspect Chart */}
       {aspectChartData.length > 0 && (
-        <Card className="p-6 bg-white/5 border border-white/10">
-          <h3 className="text-xl font-semibold mb-4 text-white/90">
+        <Card className="p-6 bg-muted/40 border border-border">
+          <h3 className="text-xl font-semibold mb-4 text-foreground">
             Aspect Breakdown
           </h3>
           <ResponsiveContainer width="100%" height={300}>
             <BarChart data={aspectChartData}>
-              <XAxis dataKey="aspect" stroke="#ddd" />
-              <YAxis stroke="#ddd" />
+              <XAxis dataKey="aspect" stroke="#64748b" />
+              <YAxis stroke="#64748b" />
               <Tooltip />
               <Legend />
-              <Bar dataKey="Positive" fill="#22c55e" />
-              <Bar dataKey="Neutral" fill="#facc15" />
-              <Bar dataKey="Negative" fill="#ef4444" />
+              <Bar dataKey="Positive" fill="#16a34a" />
+              <Bar dataKey="Neutral" fill="#ca8a04" />
+              <Bar dataKey="Negative" fill="#dc2626" />
             </BarChart>
           </ResponsiveContainer>
         </Card>
       )}
 
-      {/* ✅ Top Reviews Section (Refactored with expandable translucent cards) */}
+      {/* Top Reviews Section (expandable cards) */}
       {(topPositive.length > 0 || topNegative.length > 0) && (
-        <Card className="p-6 bg-white/5 border border-white/10">
-          <h3 className="text-xl font-semibold mb-6 text-white/90">
+        <Card className="p-6 bg-muted/40 border border-border">
+          <h3 className="text-xl font-semibold mb-6 text-foreground">
             Top Reviews
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             {/* Positive Column */}
             <div className="space-y-4">
-              <h4 className="text-green-400 font-bold mb-2">Positive Highlights</h4>
+              <h4 className="text-green-700 font-bold mb-2">Positive Highlights</h4>
               {topPositive.map((r, i) => {
                 const isExpanded = expandedPos[i];
                 const text = r.text || "";
@@ -221,15 +221,15 @@ useEffect(() => {
                   <div
                     key={`pos-${i}`}
                     className={cn(
-                      "group relative rounded-xl border border-green-400/20 bg-green-400/5 backdrop-blur-sm p-4 shadow-sm transition",
-                      "hover:border-green-400/40 hover:shadow-green-400/10"
+                      "group relative rounded-xl border border-green-200 bg-green-50 p-4 shadow-sm transition",
+                      "hover:border-green-300"
                     )}
                   >
-                    <p className="text-sm leading-relaxed text-white/90 italic">
+                    <p className="text-sm leading-relaxed text-foreground/90 italic">
                       “{displayText}”
                     </p>
                     <div className="mt-2 flex items-center justify-between">
-                      <span className="text-xs font-medium text-green-300">
+                      <span className="text-xs font-medium text-green-700">
                         Confidence: {(r.confidence * 100).toFixed(1)}%
                       </span>
                       {shouldTruncate && (
@@ -238,7 +238,7 @@ useEffect(() => {
                           onClick={() =>
                             setExpandedPos((prev) => ({ ...prev, [i]: !isExpanded }))
                           }
-                          className="text-xs px-2 py-1 rounded-md bg-green-500/10 text-green-300 hover:bg-green-500/20 focus:outline-none focus:ring-2 focus:ring-green-300/40"
+                          className="text-xs px-2 py-1 rounded-md bg-green-100 text-green-700 hover:bg-green-200 focus:outline-none focus:ring-2 focus:ring-green-300"
                         >
                           {isExpanded ? "Show less" : "Show more"}
                         </button>
@@ -251,7 +251,7 @@ useEffect(() => {
 
             {/* Negative Column */}
             <div className="space-y-4">
-              <h4 className="text-red-400 font-bold mb-2">Negative Highlights</h4>
+              <h4 className="text-red-700 font-bold mb-2">Negative Highlights</h4>
               {topNegative.map((r, i) => {
                 const isExpanded = expandedNeg[i];
                 const text = r.text || "";
@@ -266,15 +266,15 @@ useEffect(() => {
                   <div
                     key={`neg-${i}`}
                     className={cn(
-                      "group relative rounded-xl border border-red-400/20 bg-red-400/5 backdrop-blur-sm p-4 shadow-sm transition",
-                      "hover:border-red-400/40 hover:shadow-red-400/10"
+                      "group relative rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm transition",
+                      "hover:border-red-300"
                     )}
                   >
-                    <p className="text-sm leading-relaxed text-white/90 italic">
+                    <p className="text-sm leading-relaxed text-foreground/90 italic">
                       “{displayText}”
                     </p>
                     <div className="mt-2 flex items-center justify-between">
-                      <span className="text-xs font-medium text-red-300">
+                      <span className="text-xs font-medium text-red-700">
                         Confidence: {(r.confidence * 100).toFixed(1)}%
                       </span>
                       {shouldTruncate && (
@@ -283,7 +283,7 @@ useEffect(() => {
                           onClick={() =>
                             setExpandedNeg((prev) => ({ ...prev, [i]: !isExpanded }))
                           }
-                          className="text-xs px-2 py-1 rounded-md bg-red-500/10 text-red-300 hover:bg-red-500/20 focus:outline-none focus:ring-2 focus:ring-red-300/40"
+                          className="text-xs px-2 py-1 rounded-md bg-red-100 text-red-700 hover:bg-red-200 focus:outline-none focus:ring-2 focus:ring-red-300"
                         >
                           {isExpanded ? "Show less" : "Show more"}
                         </button>
@@ -298,26 +298,26 @@ useEffect(() => {
       )}
 
       {/* Summary */}
-      <Card className="p-6 bg-white/5 border border-white/10">
-        <h3 className="text-xl font-semibold mb-4 text-white/90">
+      <Card className="p-6 bg-muted/40 border border-border">
+        <h3 className="text-xl font-semibold mb-4 text-foreground">
           AI Summary
         </h3>
-        <p className="text-white/90 text-lg leading-relaxed">
+        <p className="text-foreground/90 text-lg leading-relaxed">
           {summary || "No summary available."}
         </p>
       </Card>
 
-      {/* ✅ Aspect-based highlights with dropdown filter */}
+      {/* Aspect-based highlights with dropdown filter */}
       {Object.keys(aspectExamples || {}).length > 0 && (
-        <Card className="p-6 bg-white/5 border border-white/10">
+        <Card className="p-6 bg-muted/40 border border-border">
           <div className="flex items-center justify-between mb-4 gap-4">
-            <h3 className="text-xl font-semibold text-white/90">Aspect-based highlights</h3>
+            <h3 className="text-xl font-semibold text-foreground">Aspect-based highlights</h3>
             <div className="w-56">
               <Select value={selectedAspect} onValueChange={(v) => setSelectedAspect(v)}>
-                <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                <SelectTrigger className="bg-background border-border text-foreground">
                   <SelectValue placeholder="Select aspect" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 text-white border-white/10">
+                <SelectContent className="bg-popover text-popover-foreground border-border">
                   {Object.keys(aspectExamples)
                     .sort((a, b) => a.localeCompare(b))
                     .map((a) => (
@@ -342,9 +342,9 @@ useEffect(() => {
                     <h5
                       className={cn(
                         "text-sm font-semibold",
-                        label === "Positive" && "text-green-300",
-                        label === "Neutral" && "text-yellow-300",
-                        label === "Negative" && "text-red-300"
+                        label === "Positive" && "text-green-700",
+                        label === "Neutral" && "text-yellow-700",
+                        label === "Negative" && "text-red-700"
                       )}
                     >
                       {label} ({counts[label] ?? 0})
@@ -361,20 +361,20 @@ useEffect(() => {
                           <div
                             key={key}
                             className={cn(
-                              "rounded-lg border backdrop-blur-sm p-3 text-sm",
-                              label === "Positive" && "border-green-400/20 bg-green-400/5",
-                              label === "Neutral" && "border-yellow-400/20 bg-yellow-400/5",
-                              label === "Negative" && "border-red-400/20 bg-red-400/5"
+                              "rounded-lg border p-3 text-sm",
+                              label === "Positive" && "border-green-200 bg-green-50",
+                              label === "Neutral" && "border-yellow-200 bg-yellow-50",
+                              label === "Negative" && "border-red-200 bg-red-50"
                             )}
                           >
-                            <p className="text-white/90 italic">“{displayText}”</p>
+                            <p className="text-foreground/90 italic">“{displayText}”</p>
                             <div className="mt-2 flex items-center justify-between">
                               <span
                                 className={cn(
                                   "text-xs font-medium",
-                                  label === "Positive" && "text-green-300",
-                                  label === "Neutral" && "text-yellow-300",
-                                  label === "Negative" && "text-red-300"
+                                  label === "Positive" && "text-green-700",
+                                  label === "Neutral" && "text-yellow-700",
+                                  label === "Negative" && "text-red-700"
                                 )}
                               >
                                 Confidence: {(r.confidence * 100).toFixed(1)}%
@@ -385,9 +385,9 @@ useEffect(() => {
                                   onClick={() => setExpandedAspect((p) => ({ ...p, [key]: !isExp }))}
                                   className={cn(
                                     "text-xs px-2 py-1 rounded-md focus:outline-none focus:ring-2",
-                                    label === "Positive" && "bg-green-500/10 text-green-300 hover:bg-green-500/20 focus:ring-green-300/40",
-                                    label === "Neutral" && "bg-yellow-500/10 text-yellow-300 hover:bg-yellow-500/20 focus:ring-yellow-300/40",
-                                    label === "Negative" && "bg-red-500/10 text-red-300 hover:bg-red-500/20 focus:ring-red-300/40"
+                                    label === "Positive" && "bg-green-100 text-green-700 hover:bg-green-200 focus:ring-green-300",
+                                    label === "Neutral" && "bg-yellow-100 text-yellow-700 hover:bg-yellow-200 focus:ring-yellow-300",
+                                    label === "Negative" && "bg-red-100 text-red-700 hover:bg-red-200 focus:ring-red-300"
                                   )}
                                 >
                                   {isExp ? "Show less" : "Show more"}
@@ -401,10 +401,10 @@ useEffect(() => {
                   </div>
                 );
                 return (
-                  <div className="rounded-xl border border-white/10 bg-white/5 p-4">
+                  <div className="rounded-xl border border-border bg-background p-4">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                      <h4 className="text-lg font-semibold text-white/90">{aspect}</h4>
-                      <div className="text-xs text-white/70">
+                      <h4 className="text-lg font-semibold text-foreground">{aspect}</h4>
+                      <div className="text-xs text-muted-foreground">
                         <span className="mr-3">P: {counts.Positive ?? 0}</span>
                         <span className="mr-3">N: {counts.Negative ?? 0}</span>
                         <span>U: {counts.Neutral ?? 0}</span>

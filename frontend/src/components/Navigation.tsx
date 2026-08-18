@@ -8,7 +8,6 @@ const Navigation = () => {
   const navLinks = [
     { path: "/", label: "Home" },
     { path: "/ebay", label: "eBay" },
-    { path: "/bestbuy", label: "BestBuy" },
     { path: "/compare", label: "Compare" },
   ];
 
