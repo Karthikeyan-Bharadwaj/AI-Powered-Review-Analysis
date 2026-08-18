@@ -94,7 +94,10 @@ def _fetch_html(url: str, render: bool = False) -> str | None:
     fall back to ScraperAPI only if BestBuy blocks/rejects the direct request."""
     if not render:
         try:
-            resp = requests.get(url, headers=DIRECT_HEADERS, timeout=20)
+            # BestBuy tends to stall (not reject) connections from datacenter
+            # IPs rather than fail fast, so keep this timeout short — a long
+            # timeout here just delays the ScraperAPI fallback on every page.
+            resp = requests.get(url, headers=DIRECT_HEADERS, timeout=6)
             if resp.status_code == 200 and len(resp.text) > 1000:
                 return resp.text
             print(f"⚠️ Direct request got HTTP {resp.status_code}, falling back to ScraperAPI")
@@ -153,7 +156,7 @@ def _parse_reviews(html: str, sku: str) -> list:
     return reviews
 
 
-def fetch_bestbuy_reviews(sku: str, max_pages: int = 5) -> list:
+def fetch_bestbuy_reviews(sku: str, max_pages: int = 2) -> list:
     """Scrape BestBuy customer reviews for a SKU directly from bestbuy.com."""
     all_reviews = []
     for page in range(1, max_pages + 1):
