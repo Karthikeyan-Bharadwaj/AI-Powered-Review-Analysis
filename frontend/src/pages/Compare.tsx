@@ -6,7 +6,7 @@ import { Loader2, ArrowLeftRight } from "lucide-react";
 import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import ResultsDisplay from "@/components/ResultsDisplay";
-import { scrapeEbay, processProduct, getSummary, compareProducts } from "@/lib/api";
+import { scrapeEbay, scrapeBestBuy, processProduct, getSummary, compareProducts } from "@/lib/api";
 
 const Compare = () => {
   const [url1, setUrl1] = useState("");
@@ -26,8 +26,14 @@ const Compare = () => {
       return;
     }
 
-    if (!url1.includes("ebay") || !url2.includes("ebay")) {
-      toast.error("Both URLs must be eBay product links");
+    const detectPlatform = (url: string) =>
+      url.includes("ebay") ? "ebay" : url.includes("bestbuy") ? "bestbuy" : null;
+
+    const platform1 = detectPlatform(url1);
+    const platform2 = detectPlatform(url2);
+
+    if (!platform1 || !platform2) {
+      toast.error("Both URLs must be from eBay or BestBuy!");
       return;
     }
 
@@ -40,8 +46,10 @@ const Compare = () => {
     try {
       // Step 1 — Scrape both products
       setComparingStep("Fetching reviews for both products...");
-      const data1 = await scrapeEbay(url1);
-      const data2 = await scrapeEbay(url2);
+      const data1 =
+        platform1 === "ebay" ? await scrapeEbay(url1) : await scrapeBestBuy(url1);
+      const data2 =
+        platform2 === "ebay" ? await scrapeEbay(url2) : await scrapeBestBuy(url2);
 
       if (!data1?.reviews?.length || !data2?.reviews?.length) {
         toast.error("No reviews found for one or both products!");
@@ -97,7 +105,7 @@ const Compare = () => {
               Compare Products
             </h1>
             <p className="text-muted-foreground text-lg">
-              Compare two eBay products side by side with AI-powered analysis
+              Compare two products side by side with AI-powered analysis
             </p>
           </div>
 
@@ -127,7 +135,7 @@ const Compare = () => {
                   <Input
                     id="url2"
                     type="url"
-                    placeholder="https://www.ebay.com/itm/..."
+                    placeholder="https://www.bestbuy.com/site/..."
                     value={url2}
                     onChange={(e) => setUrl2(e.target.value)}
                     className="bg-input border-border focus:border-primary transition-colors"

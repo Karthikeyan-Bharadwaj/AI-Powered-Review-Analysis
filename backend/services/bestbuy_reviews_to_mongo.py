@@ -2,6 +2,7 @@ import os
 import re
 import time
 import requests
+from bs4 import BeautifulSoup
 from urllib.parse import urlparse, parse_qs
 from pymongo import MongoClient, errors
 from dotenv import load_dotenv
@@ -11,14 +12,21 @@ from dotenv import load_dotenv
 # -----------------------------------
 load_dotenv()
 
-BESTBUY_API_KEY = os.getenv("BESTBUY_API_KEY")
+SCRAPER_API_KEY = os.getenv("SCRAPER_API_KEY")
+SCRAPER_BASE = "https://api.scraperapi.com"
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017")
 
 # ✅ Unified DB + Collection (Same as eBay + NLP Utils)
 MONGO_DB = "review_system"
 MONGO_COLLECTION = "reviews_raw"
 
-API_BASE = "https://api.bestbuy.com/v1/reviews"
+DIRECT_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36"
+    ),
+    "Accept-Language": "en-US,en;q=0.9",
+}
 
 # -----------------------------------
 # 2️⃣ MongoDB Helper
@@ -39,8 +47,7 @@ def extract_sku(url_or_sku: str) -> str:
     """Attempt to extract a BestBuy SKU from:
     - Direct numeric input (6–8 digits)
     - URL query parameter skuId=1234567
-    - URL path segment ending with /1234567.p
-    - Legacy pattern /sku/1234567
+    - URL path segment ending with /1234567.p or /sku/1234567
     Raises ValueError if no SKU can be found.
     """
     raw = (url_or_sku or "").strip()
@@ -64,60 +71,122 @@ def extract_sku(url_or_sku: str) -> str:
         path_match = re.search(r"/(\d{6,8})\.p", parsed.path)
         if path_match:
             return path_match.group(1)
+        # Path pattern /sku/1234567
+        sku_match = re.search(r"/sku/(\d{6,8})", parsed.path)
+        if sku_match:
+            return sku_match.group(1)
     except Exception:
         # If urlparse fails, continue to regex attempts below
         pass
 
-    # Legacy /sku/1234567 pattern
-    legacy_match = re.search(r"/sku/(\d{6,8})", raw)
-    if legacy_match:
-        return legacy_match.group(1)
+    # Any bare 6-8 digit run anywhere in the string (last resort)
+    fallback_match = re.search(r"\b(\d{6,8})\b", raw)
+    if fallback_match:
+        return fallback_match.group(1)
 
-    raise ValueError("❌ Could not extract SKU. Provide a BestBuy URL containing skuId= or /<digits>.p or a raw numeric SKU.")
+    raise ValueError("❌ Could not extract SKU. Provide a BestBuy URL containing a SKU number or a raw numeric SKU.")
 
 # -----------------------------------
-# 4️⃣ Fetch Reviews
+# 4️⃣ Direct scrape (with ScraperAPI fallback)
 # -----------------------------------
-def fetch_reviews_page(sku: str, page: int = 1, page_size: int = 10):
-    params = {
-        "apiKey": BESTBUY_API_KEY,
-        "format": "json",
-        "page": page,
-        "pageSize": page_size,
-    }
-    url = f"{API_BASE}(sku={sku})"
-    try:
-        if not BESTBUY_API_KEY:
-            raise ValueError("❌ BESTBUY_API_KEY not set in environment. Create a .env with BESTBUY_API_KEY=YOUR_KEY.")
-        r = requests.get(url, params=params, timeout=30)
-        r.raise_for_status()
-        return r.json()
-    except requests.exceptions.RequestException as e:
-        print(f"[ERROR] {e}")
+def _fetch_html(url: str, render: bool = False) -> str | None:
+    """Scrape BestBuy directly first (no third-party API or credits used);
+    fall back to ScraperAPI only if BestBuy blocks/rejects the direct request."""
+    if not render:
+        try:
+            resp = requests.get(url, headers=DIRECT_HEADERS, timeout=20)
+            if resp.status_code == 200 and len(resp.text) > 1000:
+                return resp.text
+            print(f"⚠️ Direct request got HTTP {resp.status_code}, falling back to ScraperAPI")
+        except requests.RequestException as e:
+            print(f"⚠️ Direct request failed ({e}), falling back to ScraperAPI")
+
+    if not SCRAPER_API_KEY:
         return None
-    except ValueError as ve:
-        # Propagate configuration errors upward for clearer client message
-        raise ve
+
+    params = {"api_key": SCRAPER_API_KEY, "url": url}
+    if render:
+        params["render"] = "true"
+    for i in range(3):
+        try:
+            resp = requests.get(SCRAPER_BASE, params=params, timeout=60)
+            if resp.status_code == 200:
+                return resp.text
+            print(f"⚠️ ScraperAPI HTTP {resp.status_code}, retry {i + 1}")
+        except requests.RequestException as e:
+            print(f"⚠️ ScraperAPI error ({e}), retry {i + 1}")
+        time.sleep(2)
+    return None
+
+
+def _parse_reviews(html: str, sku: str) -> list:
+    soup = BeautifulSoup(html, "html.parser")
+    items = soup.select(".review-item")
+    reviews = []
+    for item in items:
+        body = item.select_one(".ugc-review-body")
+        text = body.get_text(" ", strip=True) if body else ""
+        if not text:
+            continue
+
+        author_elem = item.select_one(".ugc-author")
+        rating_elem = item.select_one(".review-rating .visually-hidden")
+        title_elem = item.select_one(".review-title")
+        date_elem = item.select_one(".submission-date")
+
+        rating = None
+        if rating_elem:
+            rating_match = re.search(r"Rated (\d+(?:\.\d+)?) out of", rating_elem.get_text(strip=True))
+            if rating_match:
+                rating = float(rating_match.group(1))
+
+        reviews.append({
+            "sku": sku,
+            "product_id": sku,
+            "source": "bestbuy",
+            "reviewer": author_elem.get_text(strip=True) if author_elem else "Anonymous",
+            "rating": rating,
+            "title": title_elem.get_text(strip=True) if title_elem else "",
+            "text": text,
+            "date": (date_elem.get("title") if date_elem else "") or "",
+        })
+    return reviews
+
+
+def fetch_bestbuy_reviews(sku: str, max_pages: int = 5) -> list:
+    """Scrape BestBuy customer reviews for a SKU directly from bestbuy.com."""
+    all_reviews = []
+    for page in range(1, max_pages + 1):
+        url = f"https://www.bestbuy.com/site/reviews/x/{sku}?page={page}&pageSize=20"
+        html = _fetch_html(url)
+        if not html:
+            print(f"⚠️ Could not fetch page {page} for SKU {sku}")
+            break
+
+        page_reviews = _parse_reviews(html, sku)
+        print(f"👉 Found {len(page_reviews)} reviews on page {page}")
+        if not page_reviews:
+            break
+
+        all_reviews.extend(page_reviews)
+        if len(page_reviews) < 20:
+            # Last page (fewer than a full page of results)
+            break
+        time.sleep(1)
+
+    # Deduplicate by review text
+    unique = []
+    seen = set()
+    for r in all_reviews:
+        if r["text"] not in seen:
+            unique.append(r)
+            seen.add(r["text"])
+
+    print(f"✅ Total unique reviews: {len(unique)}")
+    return unique
 
 # -----------------------------------
-# 5️⃣ Normalize Review Object
-# -----------------------------------
-def normalize_review(r: dict, sku: str) -> dict:
-    """Convert BestBuy API review into consistent schema (like eBay)."""
-    return {
-        "id": r.get("id"),
-        "sku": sku,
-        "product_id": sku,
-        "source": "bestbuy",
-        "reviewer": r.get("reviewer", {}).get("name", "Anonymous") if isinstance(r.get("reviewer"), dict) else "Anonymous",
-        "rating": r.get("rating"),
-        "title": r.get("title"),
-        "text": r.get("comment") or "",
-        "date": r.get("submissionTime", ""),
-    }
-
-# -----------------------------------
-# 6️⃣ Save to MongoDB
+# 5️⃣ Save to MongoDB
 # -----------------------------------
 def save_reviews_to_mongo(reviews: list):
     col = get_mongo_collection()
@@ -132,80 +201,45 @@ def save_reviews_to_mongo(reviews: list):
     return inserted
 
 # -----------------------------------
-# 7️⃣ Scraper with Caching
+# 6️⃣ Scraper with Caching
 # -----------------------------------
-def scrape_and_store_reviews(link_or_sku: str, page_size: int = 10, delay: float = 1.0):
+def scrape_and_store_reviews(link_or_sku: str) -> list:
     col = get_mongo_collection()
     sku = extract_sku(link_or_sku)
 
     # ✅ Step 1: Check Mongo cache
     existing = list(col.find({"sku": sku}))
     if existing:
-        print(f"💾 Found {len(existing)} cached reviews for SKU {sku}. Skipping API call.")
-        # 🔧 Ensure cached docs have product_id set (backfill old records)
-        needs_backfill = any("product_id" not in doc or not doc.get("product_id") for doc in existing)
-        if needs_backfill:
-            try:
-                col.update_many({"sku": sku, "product_id": {"$exists": False}}, {"$set": {"product_id": sku}})
-                col.update_many({"sku": sku, "product_id": None}, {"$set": {"product_id": sku}})
-                print(f"🛠️ Backfilled product_id for cached SKU {sku}.")
-            except Exception as e:
-                print(f"⚠️ Backfill failed for SKU {sku}: {e}")
-            # Refresh cache after backfill
-            existing = list(col.find({"sku": sku}))
-        # ✅ Normalize shape for response
+        print(f"💾 Found {len(existing)} cached reviews for SKU {sku}. Skipping scrape.")
         normalized_existing = [
             {
-                "id": doc.get("id"),
                 "sku": sku,
                 "product_id": doc.get("product_id") or sku,
                 "source": doc.get("source", "bestbuy"),
-                "reviewer": (doc.get("reviewer") or "Anonymous"),
+                "reviewer": doc.get("reviewer") or "Anonymous",
                 "rating": doc.get("rating"),
                 "title": doc.get("title"),
-                "text": doc.get("text") or doc.get("comment") or "",
-                "date": doc.get("date") or doc.get("submissionTime", ""),
+                "text": doc.get("text") or "",
+                "date": doc.get("date", ""),
             }
             for doc in existing
         ]
         return normalized_existing
 
     print(f"🆔 Extracted SKU: {sku}")
-    print(f"🔍 No cache found — Fetching reviews using BestBuy Developer API...\n")
+    print("🔍 No cache found — scraping reviews directly from bestbuy.com...\n")
 
-    # ✅ Step 2: Fetch from API
-    data = fetch_reviews_page(sku, 1, page_size)
-    if not data:
-        print("❌ Failed to fetch first page.")
+    reviews = fetch_bestbuy_reviews(sku)
+    if not reviews:
+        print("❌ No reviews found.")
         return []
 
-    total = data.get("total", 0)
-    total_pages = data.get("totalPages", 1)
-    print(f"✅ Total reviews: {total} | Total pages: {total_pages}\n")
-
-    all_reviews = []
-    inserted_total = 0
-
-    for page in range(1, total_pages + 1):
-        d = fetch_reviews_page(sku, page, page_size)
-        if not d:
-            print(f"⚠️ Skipping page {page}")
-            continue
-
-        reviews = d.get("reviews", [])
-        normalized = [normalize_review(r, sku) for r in reviews]
-        inserted = save_reviews_to_mongo(normalized)
-        inserted_total += inserted
-        all_reviews.extend(normalized)
-        print(f"📄 Page {page}/{total_pages} | Inserted: {inserted}")
-
-        time.sleep(delay)
-
-    print(f"\n✅ Done. Total {inserted_total} new reviews added for SKU {sku}.")
-    return all_reviews
+    inserted = save_reviews_to_mongo(reviews)
+    print(f"\n✅ Done. Inserted {inserted} new reviews for SKU {sku}.")
+    return reviews
 
 # -----------------------------------
-# 8️⃣ CLI Entry
+# 7️⃣ CLI Entry
 # -----------------------------------
 if __name__ == "__main__":
     user_input = input("🔗 Enter BestBuy product URL or SKU: ").strip()

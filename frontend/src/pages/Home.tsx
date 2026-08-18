@@ -8,7 +8,7 @@ const steps = [
   {
     icon: Link2,
     title: "Paste a product link",
-    description: "Drop in any eBay product URL — no sign-up, no setup.",
+    description: "Drop in any eBay or BestBuy product URL — no sign-up, no setup.",
   },
   {
     icon: Sparkles,
@@ -43,10 +43,16 @@ const Home = () => {
             </p>
           </div>
 
-          <div className="flex justify-center items-center animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center animate-in fade-in slide-in-from-bottom-8 duration-700 delay-200">
             <Link to="/ebay">
               <Button variant="neon" size="xl" className="group">
                 Analyze eBay Reviews
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </Link>
+            <Link to="/bestbuy">
+              <Button variant="neonOrange" size="xl" className="group">
+                Analyze BestBuy Reviews
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Button>
             </Link>

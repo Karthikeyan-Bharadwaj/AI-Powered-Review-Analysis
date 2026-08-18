@@ -3,9 +3,9 @@ import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import AnalyzerForm from "@/components/AnalyzerForm";
 import ResultsDisplay from "@/components/ResultsDisplay";
-import { scrapeEbay, processProduct, getSummary } from "@/lib/api";
+import { scrapeBestBuy, processProduct, getSummary } from "@/lib/api";
 
-const EbayAnalyzer = () => {
+const BestBuyAnalyzer = () => {
   const [showResults, setShowResults] = useState(false);
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,11 +19,12 @@ const EbayAnalyzer = () => {
     setProductId(null);
 
     try {
-      // Step 1: Scrape reviews
-      setLoadingStep("Fetching eBay reviews...");
-      const data = await scrapeEbay(url);
+      // Step 1: Scrape BestBuy reviews
+      setLoadingStep("Fetching BestBuy reviews...");
+      const data = await scrapeBestBuy(url);
+
       if (!data?.reviews?.length) {
-        toast.error("No reviews found for this product.");
+        toast.error("No reviews found for this product. Try a different URL or SKU.");
         return;
       }
 
@@ -42,8 +43,8 @@ const EbayAnalyzer = () => {
       setShowResults(true);
       toast.success(`Analyzed ${data.count} review${data.count === 1 ? "" : "s"}!`);
     } catch (error) {
-      console.error("Analysis failed:", error);
-      toast.error("Something went wrong while analyzing the product. Please try again.");
+      console.error("BestBuy analysis failed:", error);
+      toast.error("Something went wrong while analyzing the BestBuy product. Please try again.");
     } finally {
       setLoading(false);
       setLoadingStep(undefined);
@@ -57,7 +58,7 @@ const EbayAnalyzer = () => {
       <main className="container mx-auto px-4 py-12 max-w-4xl">
         <div className="space-y-12">
           <AnalyzerForm
-            platform="ebay"
+            platform="bestbuy"
             onAnalyze={handleAnalyze}
             isLoading={loading}
             loadingStep={loadingStep}
@@ -76,4 +77,4 @@ const EbayAnalyzer = () => {
   );
 };
 
-export default EbayAnalyzer;
+export default BestBuyAnalyzer;
