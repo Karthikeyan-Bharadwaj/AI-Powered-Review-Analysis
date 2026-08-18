@@ -50,6 +50,14 @@ export async function processProduct(product_id: string): Promise<{ processed: n
 }
 
 /* -----------------------------
+   📊 Full NLP Analysis (sentiments, aspects, top reviews)
+----------------------------- */
+export async function fetchProcessedData(product_id: string): Promise<any> {
+  const res = await axios.get(`${API_BASE}/process/${product_id}`);
+  return res.data;
+}
+
+/* -----------------------------
    🤖 AI Summary
 ----------------------------- */
 export async function getSummary(product_id: string): Promise<SummaryResponse> {

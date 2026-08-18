@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { toast } from "sonner";
 import Navigation from "@/components/Navigation";
 import AnalyzerForm from "@/components/AnalyzerForm";
 import ResultsDisplay from "@/components/ResultsDisplay";
@@ -6,51 +7,46 @@ import { scrapeEbay, processProduct, getSummary } from "@/lib/api";
 
 const EbayAnalyzer = () => {
   const [showResults, setShowResults] = useState(false);
-  const [sentiment, setSentiment] = useState("");
   const [summary, setSummary] = useState("");
   const [loading, setLoading] = useState(false);
+  const [loadingStep, setLoadingStep] = useState<string>();
   const [productId, setProductId] = useState<string | null>(null);
 
   const handleAnalyze = async (url: string) => {
-    console.log("🔍 Analyzing eBay URL:", url);
-    if (!url.trim()) {
-      alert("Please enter a valid eBay URL!");
-      return;
-    }
-
     setLoading(true);
     setShowResults(false);
     setSummary("");
-    setSentiment("");
     setProductId(null);
 
     try {
-      // ✅ Step 1: Scrape reviews
+      // Step 1: Scrape reviews
+      setLoadingStep("Fetching eBay reviews...");
       const data = await scrapeEbay(url);
       if (!data?.reviews?.length) {
-        alert("No reviews found for this product.");
+        toast.error("No reviews found for this product.");
         return;
       }
 
       const pid = data.reviews[0].product_id;
       setProductId(pid);
 
-      // ✅ Step 2: Run NLP processing
+      // Step 2: Run NLP processing
+      setLoadingStep("Analyzing sentiment...");
       await processProduct(pid);
 
-      // ✅ Step 3: Get AI summary
+      // Step 3: Get AI summary
+      setLoadingStep("Generating AI summary...");
       const summaryData = await getSummary(pid);
 
-      // ✅ Update UI
       setSummary(summaryData.summary || "No summary available.");
-      setSentiment("Positive"); // You can update dynamically later
       setShowResults(true);
-
+      toast.success(`Analyzed ${data.count} review${data.count === 1 ? "" : "s"}!`);
     } catch (error) {
-      console.error("❌ Analysis failed:", error);
-      alert("Something went wrong while analyzing the product.");
+      console.error("Analysis failed:", error);
+      toast.error("Something went wrong while analyzing the product. Please try again.");
     } finally {
       setLoading(false);
+      setLoadingStep(undefined);
     }
   };
 
@@ -64,13 +60,12 @@ const EbayAnalyzer = () => {
             platform="ebay"
             onAnalyze={handleAnalyze}
             isLoading={loading}
+            loadingStep={loadingStep}
           />
 
-          {/* ✅ Pass productId properly to ResultsDisplay */}
           {productId && (
             <ResultsDisplay
               show={showResults}
-              sentiment={sentiment}
               summary={summary}
               productId={productId}
             />

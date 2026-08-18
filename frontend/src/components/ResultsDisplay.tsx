@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
+import { fetchProcessedData } from "@/lib/api";
 import {
   Select,
   SelectContent,
@@ -46,6 +47,8 @@ export default function ResultsDisplay({
   >({});
   const [expandedAspect, setExpandedAspect] = useState<Record<string, boolean>>({});
   const [selectedAspect, setSelectedAspect] = useState<string>("");
+  const [isLoadingInsights, setIsLoadingInsights] = useState(false);
+  const [insightsError, setInsightsError] = useState<string | null>(null);
 
 useEffect(() => {
   if (!productId) return;
@@ -55,9 +58,10 @@ useEffect(() => {
   const fetchNLPData = async () => {
     if (isFetched) return;
     isFetched = true;
+    setIsLoadingInsights(true);
+    setInsightsError(null);
     try {
-      const res = await fetch(`http://127.0.0.1:5000/api/process/${productId}`);
-      const data = await res.json();
+      const data = await fetchProcessedData(productId);
 
       if (data.error) throw new Error(data.error);
       console.log("Fetched NLP Data:", data);
@@ -93,6 +97,9 @@ useEffect(() => {
       setAspectExamples(data.aspect_examples || {});
     } catch (error) {
       console.error("Error fetching NLP data:", error);
+      setInsightsError("We couldn't load the detailed sentiment breakdown. The summary below is still accurate.");
+    } finally {
+      setIsLoadingInsights(false);
     }
   };
 
@@ -104,9 +111,44 @@ useEffect(() => {
 
   const COLORS = ["#22c55e", "#facc15", "#ef4444"];
 
+  const dominantSentiment = sentimentData.length
+    ? sentimentData.reduce((max, cur) => (cur.value > max.value ? cur : max), sentimentData[0]).name
+    : sentiment;
+
+  const sentimentStyles: Record<string, string> = {
+    Positive: "bg-green-500/15 text-green-300 border-green-400/30",
+    Neutral: "bg-yellow-500/15 text-yellow-300 border-yellow-400/30",
+    Negative: "bg-red-500/15 text-red-300 border-red-400/30",
+  };
+
   return (
-    <div className="space-y-10 bg-white/10 p-8 rounded-xl backdrop-blur-lg shadow-lg">
-      <h2 className="text-3xl font-bold mb-6 text-white">AI Insights</h2>
+    <div className="space-y-10 bg-white/10 p-8 rounded-xl backdrop-blur-lg shadow-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <h2 className="text-3xl font-bold text-white">AI Insights</h2>
+        {dominantSentiment && (
+          <span
+            className={cn(
+              "text-sm font-semibold px-4 py-1.5 rounded-full border",
+              sentimentStyles[dominantSentiment] || "bg-white/10 text-white border-white/20"
+            )}
+          >
+            Overall: {dominantSentiment}
+          </span>
+        )}
+      </div>
+
+      {isLoadingInsights && sentimentData.length === 0 && (
+        <div className="flex items-center gap-3 text-white/70 text-sm">
+          <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+          Crunching the sentiment and aspect breakdown…
+        </div>
+      )}
+
+      {insightsError && (
+        <div className="rounded-lg border border-yellow-400/30 bg-yellow-400/10 px-4 py-3 text-sm text-yellow-200">
+          {insightsError}
+        </div>
+      )}
 
       {/* Sentiment Chart */}
       {sentimentData.length > 0 && (

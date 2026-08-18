@@ -12,10 +12,11 @@ const Compare = () => {
   const [url1, setUrl1] = useState("");
   const [url2, setUrl2] = useState("");
   const [isComparing, setIsComparing] = useState(false);
+  const [comparingStep, setComparingStep] = useState<string>();
   const [showResults, setShowResults] = useState(false);
   const [comparisonSummary, setComparisonSummary] = useState("");
-  const [product1, setProduct1] = useState({ id: "", summary: "", sentiment: "" });
-  const [product2, setProduct2] = useState({ id: "", summary: "", sentiment: "" });
+  const [product1, setProduct1] = useState({ id: "", summary: "" });
+  const [product2, setProduct2] = useState({ id: "", summary: "" });
 
   const handleCompare = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,11 +40,12 @@ const Compare = () => {
     setIsComparing(true);
     setShowResults(false);
     setComparisonSummary("");
-    setProduct1({ id: "", summary: "", sentiment: "" });
-    setProduct2({ id: "", summary: "", sentiment: "" });
+    setProduct1({ id: "", summary: "" });
+    setProduct2({ id: "", summary: "" });
 
     try {
-      // ✅ Step 1 — Scrape both products
+      // Step 1 — Scrape both products
+      setComparingStep("Fetching reviews for both products...");
       const data1 =
         platform1 === "ebay" ? await scrapeEbay(url1) : await scrapeBestBuy(url1);
       const data2 =
@@ -57,37 +59,38 @@ const Compare = () => {
       const pid1 = data1.reviews[0].product_id;
       const pid2 = data2.reviews[0].product_id;
 
-      // ✅ Step 2 — Run NLP processing
+      // Step 2 — Run NLP processing
+      setComparingStep("Analyzing sentiment for both products...");
       await processProduct(pid1);
       await processProduct(pid2);
 
-      // ✅ Step 3 — Get AI summaries
+      // Step 3 — Get AI summaries
+      setComparingStep("Generating AI summaries...");
       const summary1 = await getSummary(pid1);
       const summary2 = await getSummary(pid2);
 
-      // ✅ Step 4 — Compare via backend
+      // Step 4 — Compare via backend
+      setComparingStep("Building side-by-side comparison...");
       const comp = await compareProducts(pid1, pid2, "Product 1", "Product 2");
 
-      // ✅ Update UI
       setProduct1({
         id: pid1,
         summary: summary1.summary || "No summary available.",
-        sentiment: "Positive",
       });
       setProduct2({
         id: pid2,
         summary: summary2.summary || "No summary available.",
-        sentiment: "Neutral",
       });
       setComparisonSummary(comp.comparison || "No comparison available.");
       setShowResults(true);
 
       toast.success("Comparison complete!");
     } catch (error) {
-      console.error("❌ Compare failed:", error);
+      console.error("Compare failed:", error);
       toast.error("Something went wrong while comparing products.");
     } finally {
       setIsComparing(false);
+      setComparingStep(undefined);
     }
   };
 
@@ -151,7 +154,7 @@ const Compare = () => {
                 {isComparing ? (
                   <>
                     <Loader2 className="animate-spin mr-2" />
-                    Comparing Products...
+                    {comparingStep || "Comparing Products..."}
                   </>
                 ) : (
                   <>
@@ -175,7 +178,6 @@ const Compare = () => {
                   </Card>
                   <ResultsDisplay
                     show={true}
-                    sentiment={product1.sentiment}
                     summary={product1.summary}
                     productId={product1.id}
                   />
@@ -189,7 +191,6 @@ const Compare = () => {
                   </Card>
                   <ResultsDisplay
                     show={true}
-                    sentiment={product2.sentiment}
                     summary={product2.summary}
                     productId={product2.id}
                   />
